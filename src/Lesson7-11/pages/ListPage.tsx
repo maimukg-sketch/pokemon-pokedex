@@ -17,6 +17,8 @@ import {
   List,
   ListItemButton,
   ListItemText,
+  ListItemAvatar,
+  Avatar,
   Typography,
   Button,
   Stack,
@@ -50,6 +52,20 @@ export default function ListPage() {
   // URLから検索文字を取得
   const queryFromUrl = searchParams.get("q") ?? "";
 
+  // 通常ポケモン一覧
+  const normalPokemon = allItems.filter((p) => {
+    const id = Number(p.url.split("/").filter(Boolean).pop());
+
+    return id < 10000;
+  });
+
+  // 現在ページ内の通常ポケモン一覧
+  const normalPageItems = items.filter((p) => {
+    const id = Number(p.url.split("/").filter(Boolean).pop());
+
+    return id < 10000;
+  });
+
   // 検索機能
   const [query, setQuery] = React.useState(queryFromUrl);
 
@@ -57,15 +73,10 @@ export default function ListPage() {
 
   const displayedItems =
     normalizedQuery === ""
-      ? items
-      : allItems.filter((p) => {
-        const id = Number(p.url.split("/").filter(Boolean).pop());
-        
-        return (
-            id < 10000 &&
-            p.name.includes(normalizedQuery)
-        );
-    });
+      ? normalPageItems
+      : normalPokemon.filter((p) => 
+          p.name.includes(normalizedQuery)
+      );
 
 
   // URLから offset を取得
@@ -77,7 +88,9 @@ export default function ListPage() {
       : 0;
 
   // 最後のページ開始位置を計算
-  const lastOffset = Math.floor((count - 1) / LIMIT) * LIMIT;
+  const pagingCount = normalPokemon.length > 0 ? normalPokemon.length : count;
+
+  const lastOffset = Math.max(0, Math.floor((pagingCount - 1) / LIMIT) * LIMIT);
 
   // 実際に使う offset
   const offset =
@@ -177,8 +190,21 @@ export default function ListPage() {
             // クリックで詳細ページへ遷移
             // /detail/pikachu のようなURLになる
             onClick={() => navigate(`/detail/${p.name}`)}
-          >            
-          <ListItemText primary={p.name} />
+          >          
+
+          <ListItemAvatar>
+            <Avatar
+              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${Number(
+                p.url.split("/").filter(Boolean).pop()
+              )}.png`}
+              alt={p.name}
+            />
+          </ListItemAvatar>
+
+          <ListItemText
+           primary={`No.${String(Number(p.url.split("/").filter(Boolean).pop())).padStart(4, "0")} ${p.name}`}
+          />
+
           </ListItemButton>
         ))}
       </List>
